@@ -1,5 +1,7 @@
 import { Request, Response, response } from "express";
 import { prisma } from "../../data/postgres";
+import { CreateTodoDto, UpdateTodoDto } from "../../domain/dtos";
+import { create } from "domain";
 
 export class TodosController{
 
@@ -28,12 +30,14 @@ export class TodosController{
     }
 
     public createTodo = async(req:Request, res:Response)=>{
-        const { text } = req.body;
+        
+        const [error,createTodoDto] = CreateTodoDto.create(req.body);
 
-        if(!text) res.status(400).json({error:'Text property is required'});
+        if(error) return res.status(400).json({error});
 
+        
         const todo = await prisma.todo.create({
-            data:{ text }
+            data:createTodoDto!
         });
         
         res.json(todo);
@@ -42,20 +46,20 @@ export class TodosController{
     public updateTodo = async(req: Request, res:Response )=>{
 
         const id= +req.params.id;
-        const {text,completedAt} = req.body;
-        
+        const [error,updateTodoDto] = UpdateTodoDto.create({...req.body,id});
+
+        if(error) return res.status(400).json({error});
+
         const todo = await prisma.todo.findFirst({
             where:{id}
         });
 
         if(!todo) return res.status(400).json({error:'ID argument did not found'});
         
+        
         const todoUpdated = await prisma.todo.update({
             where:{id},
-            data:{
-                text,
-                completedAt:(completedAt) ? new Date (completedAt) : null
-            }
+            data:updateTodoDto!.values
         });
 
         res.json(todoUpdated);
