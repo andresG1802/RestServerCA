@@ -11,7 +11,6 @@ export class CreateTodoDto{
         if( !text ) return ['Text property is required', undefined];
 
 
-
         return [undefined,new CreateTodoDto(text)];
     }
 
